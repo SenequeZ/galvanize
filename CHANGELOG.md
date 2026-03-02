@@ -1,6 +1,8 @@
 # Changelog
 
 ## vX.X.X (YYYY-MM-DD)
+### Fixed
+- Database initialization failure: automatically create parent directory for SQLite database file to prevent "out of memory (14)" error when `db_path` directory doesn't exist
 
 ## v0.5.5 (2026-02-20)
 ### Changed

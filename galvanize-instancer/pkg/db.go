@@ -3,6 +3,8 @@ package pkg
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/28Pollux28/galvanize/pkg/models"
@@ -12,6 +14,12 @@ import (
 )
 
 func InitDB(dbPath string) (*gorm.DB, error) {
+	// Ensure the parent directory exists
+	dir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create database directory: %w", err)
+	}
+
 	// Add busy_timeout and WAL mode for better concurrency
 	dsn := fmt.Sprintf("%s?_busy_timeout=5000&_journal_mode=WAL&_synchronous=NORMAL", dbPath)
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
