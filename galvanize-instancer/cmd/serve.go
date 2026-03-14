@@ -119,6 +119,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			zap.S().Fatalf("Failed to initialize database: %v", err)
 		}
+		ansible.CleanupStalePortBindings(cfg.Instancer.DBPath)
 
 		// Register the DB-backed deployment collector so Prometheus can report
 		// current deployment counts by status/challenge/team on each scrape.

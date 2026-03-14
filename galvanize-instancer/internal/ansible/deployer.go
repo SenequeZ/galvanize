@@ -34,10 +34,24 @@ type AnsibleDeployer struct{}
 
 var _ Deployer = (*AnsibleDeployer)(nil)
 
+func deploymentKey(chall *challenge.Challenge, teamID string) string {
+	return chall.Category + "/" + chall.Name + ":" + teamID
+}
+
 func (a *AnsibleDeployer) Deploy(ctx context.Context, conf *config.Config, chall *challenge.Challenge, teamID string) (string, error) {
 	var lastErr error
+	key := deploymentKey(chall, teamID)
+	randomizePorts := conf.Instancer.RandomizePublishedPorts
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		normalizedParams, protocolHints := normalizePublishedPorts(chall.DeployParameters)
+		existingBindings := loadPortBindingsFromDB(conf.Instancer.DBPath, key)
+		if randomizePorts {
+			randomizable := randomizableContainerPorts(chall.DeployParameters)
+			existingBindings = ensureRandomPortBindingsInDB(conf.Instancer.DBPath, key, randomizable)
+		}
+		normalizedParams, protocolHints, _ := normalizePublishedPortsWithState(chall.DeployParameters, randomizePorts, existingBindings, false)
+		if randomizePorts {
+			savePortBindingsToDB(conf.Instancer.DBPath, key, existingBindings)
+		}
 		executor, resultsBuff := PreparePlaybook(conf, "create", chall, teamID, normalizedParams)
 
 		if err := executor.Execute(ctx); err != nil {
@@ -79,8 +93,11 @@ func (a *AnsibleDeployer) Deploy(ctx context.Context, conf *config.Config, chall
 
 func (a *AnsibleDeployer) Terminate(ctx context.Context, conf *config.Config, chall *challenge.Challenge, teamID string) error {
 	var lastErr error
+	key := deploymentKey(chall, teamID)
+	randomizePorts := conf.Instancer.RandomizePublishedPorts
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		normalizedParams, _ := normalizePublishedPorts(chall.DeployParameters)
+		existingBindings := loadPortBindingsFromDB(conf.Instancer.DBPath, key)
+		normalizedParams, _, _ := normalizePublishedPortsWithState(chall.DeployParameters, randomizePorts, existingBindings, false)
 		executor, resultsBuff := PreparePlaybook(conf, "delete", chall, teamID, normalizedParams)
 
 		if err := executor.Execute(ctx); err != nil {
@@ -100,6 +117,9 @@ func (a *AnsibleDeployer) Terminate(ctx context.Context, conf *config.Config, ch
 		}
 		// Clear buffer to free memory
 		resultsBuff.Reset()
+		if randomizePorts {
+			clearPortBindingsFromDB(conf.Instancer.DBPath, key)
+		}
 		return nil
 	}
 

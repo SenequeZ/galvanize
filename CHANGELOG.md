@@ -4,9 +4,12 @@
 ### Added
 - Bake `data/playbooks` into the `galvanize-instancer` runtime image so default playbooks are available even without a host bind mount
 - Support optional protocol hints for TCP `published_ports` (for example `22/ssh` or `8080:80/http`) and use the hint in generated connection info URLs
+- Add optional global `instancer.randomize_published_ports` config flag to randomize host port bindings for non-fixed TCP `published_ports` entries
 
 ### Changed
 - Normalize hinted `published_ports` before running Ansible so Docker Compose still receives valid port syntax while preserving protocol hints for connection string rendering
+- Persist randomized host-port bindings in SQLite so deploy retries and instancer restarts reuse the same published ports until terminate
+- Prune stale `published_port_bindings` rows on startup when no matching non-deleted deployment exists
 
 ## v0.5.6 (2026-03-02)
 ### Fixed
