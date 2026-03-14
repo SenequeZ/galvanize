@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func GetConnectionInfo(containerInfos []ContainerInfo, host string) (string, error) {
+func GetConnectionInfo(containerInfos []ContainerInfo, host string, protocolHints map[int]string) (string, error) {
 	traefikLabel := ""
 	for _, ci := range containerInfos {
 		for labelKey, labelValue := range ci.Labels {
@@ -30,7 +30,13 @@ func GetConnectionInfo(containerInfos []ContainerInfo, host string) (string, err
 				if strings.Contains(pub.URL, ":") {
 					continue
 				}
-				ports = append(ports, fmt.Sprintf("%s://%s:%d", pub.Protocol, host, pub.PublishedPort))
+				scheme := pub.Protocol
+				if protocolHints != nil {
+					if hintedScheme, ok := protocolHints[pub.TargetPort]; ok {
+						scheme = hintedScheme
+					}
+				}
+				ports = append(ports, fmt.Sprintf("%s://%s:%d", scheme, host, pub.PublishedPort))
 			}
 		}
 		if len(ports) > 0 {

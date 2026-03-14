@@ -1,6 +1,12 @@
 # Changelog
 
 ## vX.X.X (YYYY-MM-DD)
+### Added
+- Bake `data/playbooks` into the `galvanize-instancer` runtime image so default playbooks are available even without a host bind mount
+- Support optional protocol hints for TCP `published_ports` (for example `22/ssh` or `8080:80/http`) and use the hint in generated connection info URLs
+
+### Changed
+- Normalize hinted `published_ports` before running Ansible so Docker Compose still receives valid port syntax while preserving protocol hints for connection string rendering
 
 ## v0.5.6 (2026-03-02)
 ### Fixed

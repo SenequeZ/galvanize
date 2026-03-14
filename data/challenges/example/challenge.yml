@@ -9,7 +9,10 @@ deploy_parameters:
   image: nginx:alpine  # Docker image to deploy
   unique: false  # Set to true if there needs to be a unique instance for all players
   published_ports: # Ports to expose from the container (Only for 'tcp' playbooks)
-    - 80  # Port to expose:
+    - 80  # Basic format: target port
+    # Optional connection scheme hint format:
+    # - 22/ssh        -> connection info uses ssh://host:<published_port>
+    # - 8080:80/http  -> fixed host port mapping with http:// in connection info
   compose_definition: |- # Docker Compose definition (Only for 'custom_compose' playbooks)
     version: '3'
     services:

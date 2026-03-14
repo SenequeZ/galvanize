@@ -37,7 +37,8 @@ var _ Deployer = (*AnsibleDeployer)(nil)
 func (a *AnsibleDeployer) Deploy(ctx context.Context, conf *config.Config, chall *challenge.Challenge, teamID string) (string, error) {
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		executor, resultsBuff := PreparePlaybook(conf, "create", chall, teamID, chall.DeployParameters)
+		normalizedParams, protocolHints := normalizePublishedPorts(chall.DeployParameters)
+		executor, resultsBuff := PreparePlaybook(conf, "create", chall, teamID, normalizedParams)
 
 		if err := executor.Execute(ctx); err != nil {
 			lastErr = err
@@ -65,7 +66,7 @@ func (a *AnsibleDeployer) Deploy(ctx context.Context, conf *config.Config, chall
 			return "", fmt.Errorf("no container info found in Ansible results")
 		}
 
-		connInfo, err := GetConnectionInfo(containerInfos, conf.Instancer.InstancerHost)
+		connInfo, err := GetConnectionInfo(containerInfos, conf.Instancer.InstancerHost, protocolHints)
 		if err != nil {
 			return "", fmt.Errorf("failed to build connection info: %w", err)
 		}
@@ -79,7 +80,8 @@ func (a *AnsibleDeployer) Deploy(ctx context.Context, conf *config.Config, chall
 func (a *AnsibleDeployer) Terminate(ctx context.Context, conf *config.Config, chall *challenge.Challenge, teamID string) error {
 	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		executor, resultsBuff := PreparePlaybook(conf, "delete", chall, teamID, chall.DeployParameters)
+		normalizedParams, _ := normalizePublishedPorts(chall.DeployParameters)
+		executor, resultsBuff := PreparePlaybook(conf, "delete", chall, teamID, normalizedParams)
 
 		if err := executor.Execute(ctx); err != nil {
 			lastErr = err
