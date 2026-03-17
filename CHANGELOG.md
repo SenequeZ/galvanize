@@ -2,6 +2,8 @@
 
 ## vX.X.X (YYYY-MM-DD)
 
+## v0.7.0 (2026-03-18)
+
 ### Added
 - Configurable container resource limits (CPU, memory, PID) with global defaults in `config.yaml` and per-challenge overrides in `deploy_parameters.resource_limits`
 - Optional `http_port` in `deploy_parameters` to configure which container port Traefik routes HTTP traffic to (defaults to 80)
